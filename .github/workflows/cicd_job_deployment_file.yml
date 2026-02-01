@@ -25,9 +25,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    # ✅ generate junit report also
     - name: Run Pytest
       run: |
-        pytest dqe_framework/test_table1.py
+        pytest dqe_framework/test_table1.py --junitxml=report.xml
 
     - name: Upload Pytest Report
       uses: actions/upload-artifact@v4
@@ -35,35 +36,41 @@ jobs:
         name: pytest-report
         path: report.xml
 
+    # ⚠️ install NEW Databricks CLI (not databricks-cli)
     - name: Install Databricks CLI
-      run: pip install databricks-cli
+      run: |
+        pip install databricks
 
-    - name: Configure Databricks CLI
+    # 🔎 test authentication first
+    - name: Test Databricks Connection
       env:
         DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
       run: |
-        mkdir -p ~/.databricks
-        echo "[DEFAULT]" > ~/.databricks/config
-        echo "host = $DATABRICKS_HOST" >> ~/.databricks/config
-        echo "token = $DATABRICKS_TOKEN" >> ~/.databricks/config
+        databricks workspace ls /
 
-    - name: Deploy `dqe_framework/` to DBFS
+    # 🚀 deploy code
+    - name: Deploy dqe_framework to DBFS
       env:
-        DATABRICKS_CONFIG_FILE: .databricks/config
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
       run: |
         databricks fs cp dqe_framework/ dbfs:/git_dummy_framework/ --recursive
 
+    # 📌 create job
     - name: Create Databricks Job
       env:
-        DATABRICKS_CONFIG_FILE: .databricks/config
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
       run: |
         databricks jobs create --json-file job_config.json > job_output.json
         echo "Job created"
 
+    # ▶ run job
     - name: Run Databricks Job
       env:
-        DATABRICKS_CONFIG_FILE: .databricks/config
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
       run: |
         JOB_ID=$(jq -r '.job_id' job_output.json)
         echo "Running Job ID: $JOB_ID"
