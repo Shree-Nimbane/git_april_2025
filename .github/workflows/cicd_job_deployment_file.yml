@@ -25,14 +25,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    # ----------------------------
+    # Install Databricks CLI
+    # ----------------------------
     - name: Install Databricks CLI
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install databricks
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | bash
         databricks --version
 
-
-    # ✅ generate junit report also
+    # ----------------------------
+    # Run Tests
+    # ----------------------------
     - name: Run Pytest
       run: |
         pytest dqe_framework/test_table1.py --junitxml=report.xml
@@ -43,42 +46,5 @@ jobs:
         name: pytest-report
         path: report.xml
 
-    # ⚠️ install NEW Databricks CLI (not databricks-cli)
-    - name: Install Databricks CLI
-      run: |
-        pip install databricks
-
-    # 🔎 test authentication first
-    - name: Test Databricks Connection
-      env:
-        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-      run: |
-        databricks workspace ls /
-
-    # 🚀 deploy code
-    - name: Deploy dqe_framework to DBFS
-      env:
-        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-      run: |
-        databricks fs cp dqe_framework/ dbfs:/git_dummy_framework/ --recursive
-
-    # 📌 create job
-    - name: Create Databricks Job
-      env:
-        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-      run: |
-        databricks jobs create --json-file job_config.json > job_output.json
-        echo "Job created"
-
-    # ▶ run job
-    - name: Run Databricks Job
-      env:
-        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-      run: |
-        JOB_ID=$(jq -r '.job_id' job_output.json)
-        echo "Running Job ID: $JOB_ID"
-        databricks jobs run-now --job-id $JOB_ID
+    # ----------------------------
+    # Veri
