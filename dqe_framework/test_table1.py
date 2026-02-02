@@ -3,7 +3,7 @@ from pyspark.sql.functions import col, upper, struct
 
 
 def test_count():
-    value=22
+    value=21
     if value==22:
         spark = SparkSession.builder.getOrCreate()
 
