@@ -3,9 +3,10 @@ from pyspark.sql.functions import col, upper, struct
 
 
 def test_count():
+    value=22
+    if value==22:
+        spark = SparkSession.builder.getOrCreate()
 
-
-    spark = SparkSession.builder.getOrCreate()
 
     data = [
         (1, ("john", ("mumbai", 400001))),
